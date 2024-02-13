@@ -6,24 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Інтернет-магазин</title>
     <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        
         .container {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            height: 100vh;
         }
 
-        .categories {
-            flex: 1;
-            margin-right: 20px;
+        .form {
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            height: 100%;
         }
 
-        .products {
-            flex: 2;
-            margin-right: 20px;
-        }
-
+        .categories,
+        .products,
         .details {
             flex: 1;
+            margin-right: 20px;
+            height: 100%;
         }
 
         ul {
@@ -67,31 +75,34 @@
 
 <body>
     <div class="container">
-        <div class="categories">
+        <form class="form categories" id="categoriesBlock">
             <h2>Категорії</h2>
-            <ul>
-                <li class="category" data-name="Фрукти">Фрукти</li>
-                <li class="category" data-name="Солодке">Солодке</li>
-                <li class="category" data-name="Напої">Напої</li>
+            <ul id="categoryList">
+                <li data-name="Фрукти">Фрукти</li>
+                <li data-name="Солодке">Солодке</li>
+                <li data-name="Напої">Напої</li>
             </ul>
             <button id="myOrdersBtn">Мої замовлення</button>
-        </div>
-        <div class="products">
+        </form>
+        <form class="form products" id="productsBlock">
             <h2>Товари</h2>
             <ul id="productList">
             </ul>
-        </div>
-        <div class="details">
+        </form>
+        <form class="form details" id="detailsBlock">
             <h2>Деталі товару</h2>
             <div id="productDetails">
             </div>
             <div id="totalPrice"></div>
-        </div>
+        </form>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const categories = document.querySelectorAll('.category');
+            const categoriesBlock = document.getElementById('categoriesBlock');
+            const productsBlock = document.getElementById('productsBlock');
+            const detailsBlock = document.getElementById('detailsBlock');
+            const categoryList = document.getElementById('categoryList');
             const productList = document.getElementById('productList');
             const productDetails = document.getElementById('productDetails');
             const myOrdersBtn = document.getElementById('myOrdersBtn');
@@ -100,64 +111,100 @@
             let orders = JSON.parse(localStorage.getItem('orders')) || [];
             let totalPriceValue = 0;
 
-            categories.forEach(category => {
-                category.addEventListener('click', () => {
-                    const categoryName = category.getAttribute('data-name');
-                    productList.innerHTML = ''; // Очищуємо список товарів
-                    let products = [];
-                    if (categoryName === 'Фрукти') {
-                        products = [
-                            { name: 'Яблука', price: 10 },
-                            { name: 'Апельсини', price: 15 },
-                            { name: 'Сливи', price: 20 }
-                        ];
-                    } else if (categoryName === 'Напої') {
-                        products = [
-                            { name: 'Кава', price: 25 },
-                            { name: 'Чай', price: 12 },
-                            { name: 'Сік', price: 18 }
-                        ];
-                    } else if (categoryName === 'Солодке') {
-                        products = [
-                            { name: 'Печиво', price: 8 },
-                            { name: 'Цукерки', price: 5 },
-                            { name: 'Торт', price: 30 }
-                        ];
-                    }
-                    products.forEach(product => {
-                        const li = document.createElement('li');
-                        li.textContent = `${product.name} - ${product.price} грн`;
-                        productList.appendChild(li);
-                        li.addEventListener('click', () => {
-                            productDetails.innerHTML = `<p>Інформація про товар: ${product.name} - ${product.price} грн</p><button class="buyBtn">Купити</button>`;
-                            const buyBtnInsideDetails = document.querySelector('.buyBtn');
-                            buyBtnInsideDetails.addEventListener('click', () => {
-                                orders.push({ product: product.name, price: product.price, date: new Date().toLocaleString() });
-                                localStorage.setItem('orders', JSON.stringify(orders));
-                                alert(`Товар "${product.name}" куплено за ${product.price} грн!`);
-                                productDetails.innerHTML = '';
-                                totalPriceValue += product.price;
-                                totalPrice.textContent = `Загальна сума: ${totalPriceValue} грн`;
-                            });
-                        });
+            function displayCategories() {
+                categoryList.innerHTML = '';
+                ['Фрукти', 'Солодке', 'Напої'].forEach(categoryName => {
+                    const li = document.createElement('li');
+                    li.textContent = categoryName;
+                    li.setAttribute('data-name', categoryName);
+                    categoryList.appendChild(li);
+                });
+            }
+
+            function displayProducts(categoryName) {
+                productList.innerHTML = '';
+                let products = [];
+                if (categoryName === 'Фрукти') {
+                    products = [
+                        { name: 'Яблука', price: 10 },
+                        { name: 'Апельсини', price: 15 },
+                        { name: 'Сливи', price: 20 }
+                    ];
+                } else if (categoryName === 'Напої') {
+                    products = [
+                        { name: 'Кава', price: 25 },
+                        { name: 'Чай', price: 12 },
+                        { name: 'Сік', price: 18 }
+                    ];
+                } else if (categoryName === 'Солодке') {
+                    products = [
+                        { name: 'Печиво', price: 8 },
+                        { name: 'Цукерки', price: 5 },
+                        { name: 'Торт', price: 30 }
+                    ];
+                }
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.textContent = `${product.name} - ${product.price} грн`;
+                    productList.appendChild(li);
+                    li.addEventListener('click', () => {
+                        displayProductDetails(product);
                     });
                 });
+            }
+
+            function displayProductDetails(product) {
+                productDetails.innerHTML = `<p>Інформація про товар: ${product.name} - ${product.price} грн</p><button class="buyBtn">Купити</button>`;
+                const buyBtnInsideDetails = document.querySelector('.buyBtn');
+                buyBtnInsideDetails.addEventListener('click', () => {
+                    orders.push({ product: product.name, price: product.price, date: new Date().toLocaleString() });
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                    alert(`Товар "${product.name}" куплено за ${product.price} грн!`);
+                    productDetails.innerHTML = '';
+                    totalPriceValue += product.price;
+                    totalPrice.textContent = `Загальна сума: ${totalPriceValue} грн`;
+                });
+            }
+
+            function removeEventListeners() {
+                const deleteBtns = document.querySelectorAll('.deleteBtn');
+                deleteBtns.forEach(deleteBtn => {
+                    deleteBtn.removeEventListener('click', deleteOrder);
+                });
+            }
+
+            function displayOrders() {
+                productList.innerHTML = '';
+                productList.innerHTML = orders.map((order, index) => `<li>${order.date} - ${order.product} за ${order.price} грн <button class="deleteBtn" data-index="${index}">Видалити</button></li>`).join('');
+                removeEventListeners();
+                const deleteBtns = document.querySelectorAll('.deleteBtn');
+                deleteBtns.forEach(deleteBtn => {
+                    deleteBtn.addEventListener('click', deleteOrder);
+                });
+            }
+
+            function deleteOrder(event) {
+                const index = event.target.dataset.index;
+                totalPriceValue -= orders[index].price;
+                totalPrice.textContent = `Загальна сума: ${totalPriceValue} грн`;
+                orders.splice(index, 1);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                displayOrders();
+            }
+
+            categoriesBlock.addEventListener('click', (event) => {
+                if (event.target.tagName === 'LI') {
+                    const categoryName = event.target.getAttribute('data-name');
+                    displayProducts(categoryName);
+                }
             });
 
-            myOrdersBtn.addEventListener('click', () => {
-                productList.innerHTML = '';
-                productList.innerHTML = orders.map(order => `<li>${order.date} - ${order.product} за ${order.price} грн <button class="deleteBtn">Видалити</button></li>`).join('');
-                const deleteBtns = document.querySelectorAll('.deleteBtn');
-                deleteBtns.forEach((deleteBtn, index) => {
-                    deleteBtn.addEventListener('click', () => {
-                        totalPriceValue -= orders[index].price;
-                        totalPrice.textContent = `Загальна сума: ${totalPriceValue} грн`;
-                        orders.splice(index, 1);
-                        localStorage.setItem('orders', JSON.stringify(orders));
-                        myOrdersBtn.click();
-                    });
-                });
+            myOrdersBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                displayOrders();
             });
+
+            displayCategories();
         });
     </script>
 </body>
